@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: ids_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite:///./ids.db
+      - SECRET_KEY=your-super-secret-jwt-key
+      - ALGORITHM=HS256
+      - ACCESS_TOKEN_EXPIRE_MINUTES=30
+      - FRONTEND_URL=http://localhost:5173
+    volumes:
+      - backend_data:/app/database
+
+  frontend:
+    build:
+      context: ./Dashboard
+      dockerfile: Dockerfile
+    container_name: ids_frontend
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:8000/api
+    depends_on:
+      - backend
+
+volumes:
+  backend_data:
+# Copy package files and install dependencies
+COPY package*.json ./
+RUN npm install
+
+# Copy the rest of your code and build
+COPY . .
+RUN npm run build
+
+# 1. The Build Command equivalent
+RUN npm install && npm run build
+
+# 2. The Start Command equivalent
+CMD ["npm", "run", "start"]
